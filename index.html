@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tours de Hanoï — jeu, algorithmes et mathématiques</title>
+  <meta name="description" content="Jeu des tours de Hanoï avec n piquets, démonstration pas à pas des algorithmes récursif, itératif et Frame–Stewart, et panorama des liens avec l'informatique et les mathématiques discrètes.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>Tours de Hanoï</h1>
+    <p class="tagline">Jeu libre à <em>n</em> piquets · démonstration pas à pas des algorithmes · mathématiques et informatique discrètes</p>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab active" data-tab="jeu" role="tab" aria-selected="true">Jeu</button>
+      <button class="tab" data-tab="demo" role="tab" aria-selected="false">Démonstration</button>
+      <button class="tab" data-tab="maths" role="tab" aria-selected="false">Maths &amp; Info</button>
+      <button class="tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ============================================================
+         ONGLET JEU
+         ============================================================ -->
+    <section id="tab-jeu" class="tab-panel active" role="tabpanel">
+      <div class="panel">
+        <div class="controls">
+          <label class="field">Piquets
+            <select id="game-pegs" aria-label="Nombre de piquets"></select>
+          </label>
+          <label class="field">Disques
+            <select id="game-disks" aria-label="Nombre de disques"></select>
+          </label>
+          <label class="field">Vitesse de lecture
+            <input type="range" id="game-speed" min="0" max="100" value="55" aria-label="Vitesse de lecture">
+          </label>
+          <button class="btn" id="game-reset" type="button">Réinitialiser</button>
+          <button class="btn" id="game-undo" type="button">Annuler</button>
+          <button class="btn primary" id="game-solve" type="button">Solution optimale ▶</button>
+          <button class="btn" id="game-stop" type="button" disabled>Pause</button>
+        </div>
+        <div class="stats">
+          <span id="game-moves">Coups : 0</span>
+          <span id="game-min">Minimum : 1 coups</span>
+        </div>
+        <div id="game-msg" class="msg"></div>
+      </div>
+      <div class="board-wrap">
+        <svg id="game-board" class="board" role="img" aria-label="Plateau des tours de Hanoï"></svg>
+      </div>
+      <div class="panel article" style="margin-top:1rem">
+        <p><strong>Rappel des règles.</strong> On ne déplace qu’un seul disque à la fois, et jamais un disque sur un
+        disque plus petit. L’objectif est de transférer toute la tour du premier piquet vers le dernier.
+        Avec 3 piquets, il faut <span class="kbd">2<sup>n</sup> − 1</span> coups : c’est à la fois une borne
+        inférieure et la performance de l’algorithme récursif classique (voir l’onglet
+        <em>Maths &amp; Info</em>). Avec 4 piquets et plus, l’astuce consiste à réserver un piquet pour empiler
+        provisoirement les plus petits disques — c’est la stratégie de Frame–Stewart, lue automatiquement par le
+        bouton « Solution optimale ».</p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ONGLET DÉMONSTRATION
+         ============================================================ -->
+    <section id="tab-demo" class="tab-panel" role="tabpanel">
+      <div class="panel">
+        <div class="controls">
+          <label class="field">Piquets
+            <select id="demo-pegs" aria-label="Nombre de piquets">
+              <option value="3" selected>3 piquets</option>
+              <option value="4">4 piquets</option>
+            </select>
+          </label>
+          <label class="field">Disques
+            <select id="demo-disks" aria-label="Nombre de disques"></select>
+          </label>
+          <div class="subtabs" id="demo-algo-tabs" role="tablist" aria-label="Choix de l'algorithme">
+            <button type="button" data-algo="recursive" class="active" role="tab">Récursif</button>
+            <button type="button" data-algo="iterative" role="tab">Itératif</button>
+          </div>
+          <label class="field">Vitesse
+            <input type="range" id="demo-speed" min="0" max="100" value="40" aria-label="Vitesse de lecture">
+          </label>
+          <div class="playback">
+            <button class="btn icon" id="demo-restart" type="button" title="Début">⏮</button>
+            <button class="btn icon" id="demo-prev" type="button" title="Étape précédente">◀</button>
+            <button class="btn icon primary" id="demo-play" type="button" title="Lecture / pause">▶</button>
+            <button class="btn icon" id="demo-next" type="button" title="Étape suivante">▶|</button>
+            <span class="progress" aria-hidden="true"><span id="demo-progress-bar"></span></span>
+            <span class="progress-label" id="demo-progress">Étape 1 / 1</span>
+            <span class="progress-label" id="demo-moves-info">Coups joués : 0 / 0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-grid">
+        <div class="panel">
+          <h3 id="demo-algo-title" style="margin:0.2rem 0 0">Algorithme récursif (3 piquets)</h3>
+          <p id="demo-note" style="margin:0.3rem 0 0;color:var(--text-soft);font-size:0.9rem"></p>
+          <pre class="code" id="demo-pseudocode" aria-label="Pseudocode de l'algorithme"></pre>
+          <div class="explain" id="demo-explain"></div>
+          <div class="stack-box" id="demo-stack"></div>
+          <div class="argmin-box" id="demo-argmin"></div>
+        </div>
+        <div class="board-wrap">
+          <svg id="demo-board" class="board" role="img" aria-label="Plateau de la démonstration"></svg>
+        </div>
+      </div>
+
+      <div class="panel article" style="margin-top:1rem">
+        <p><strong>Utiliser la page :</strong> flèches <span class="kbd">◀</span> <span class="kbd">▶</span> du clavier pour
+        avancer ou reculer d’un pas, <span class="kbd">espace</span> pour lire/pause. Comparez les deux algorithmes
+        pour 3 piquets : les coups joués sont <em>rigoureusement identiques</em>, seul le raisonnement diffère.
+        Avec 4 piquets, observez le calcul de la coupure optimale <em>k</em> dans le tableau de l’onglet
+        Frame–Stewart — pour 15 disques, il faut 129 coups au lieu de 32 767.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ONGLET MATHS & INFO
+         ============================================================ -->
+    <section id="tab-maths" class="tab-panel article" role="tabpanel">
+      <div class="panel">
+        <h2>1. Le problème et la formule 2<sup>n</sup> − 1</h2>
+        <p>Le jeu des <a href="https://fr.wikipedia.org/wiki/Tours_de_Hano%C3%AF" target="_blank" rel="noopener">tours de Hanoï</a>
+        a été imaginé en 1883 par le mathématicien français <strong>Édouard Lucas</strong>, publié sous le pseudonyme
+        anagrammatique « N. Claus (de Siam) » — soit « Lucas d’Amiens ». On dispose de trois piquets et de
+        <em>n</em> disques de tailles différentes, empilés du plus grand au plus petit sur le piquet de départ. On doit
+        transférer la tour vers un autre piquet en ne déplaçant qu’un disque à la fois et en ne plaçant jamais un
+        disque sur un plus petit.</p>
+        <p>Notons <em>T</em>(<em>n</em>) le nombre minimal de coups. Pour transférer <em>n</em> disques, il faut
+        obligatoirement d’abord dégager le plus grand disque, ce qui exige de rassembler les <em>n</em> − 1 plus petits
+        sur le piquet intermédiaire — c’est exactement un sous-problème de même nature :</p>
+        <div class="formula">T(0) = 0,&nbsp;&nbsp; T(n) = 2·T(n − 1) + 1&nbsp;&nbsp;⟹&nbsp;&nbsp; <strong>T(n) = 2<sup>n</sup> − 1</strong></div>
+        <p>La résolution de cette relation de récurrence se fait en posant <em>S</em>(<em>n</em>) = <em>T</em>(<em>n</em>) + 1,
+        qui vérifie <em>S</em>(<em>n</em>) = 2·<em>S</em>(<em>n</em> − 1), donc <em>S</em>(<em>n</em>) = 2<sup>n</sup>.
+        Les valeurs 1, 3, 7, 15, 31, 63… sont les <a href="https://oeis.org/A000225" target="_blank" rel="noopener">nombres de
+        Mersenne (OEIS A000225)</a>. C’est le sujet d’un chapitre classique des
+        <a href="https://eng.libretexts.org/Bookshelves/Computer_Science/Programming_and_Computation_Fundamentals/Mathematics_for_Computer_Science_(Lehman_Leighton_and_Meyer)/05%3A_Recurrences/21%3A_Recurrences/21.01%3A_The_Towers_of_Hanoi"
+        target="_blank" rel="noopener">cours de récurrences du MIT</a> et des
+        <a href="https://cs121.boazbarak.org/LL_recurrence_1.pdf" target="_blank" rel="noopener">notes de Boaz Barak</a>.</p>
+
+        <h3>Prouver que c’est optimal — et unique</h3>
+        <p>La construction récursive donne une suite de coups de longueur 2<sup>n</sup> − 1. Pour montrer qu’on ne
+        peut pas faire mieux, plusieurs preuves coexistent (voir la
+        <a href="https://images.math.cnrs.fr/les-tours-de-hanoi-i/" target="_blank" rel="noopener">démonstration détaillée
+        de Jonathan Chappelon</a>, et la version « Grand Oral » de
+        <a href="https://www.mathoutils.fr/grand-oral-mathematiques/tours-de-hanoi/" target="_blank" rel="noopener">Mathoutils</a>) :</p>
+        <ul>
+          <li><strong>Par récurrence</strong> : pour déplacer le plus grand disque, les <em>n</em> − 1 autres doivent
+          d’abord être rassemblés sur un seul piquet (≥ <em>T</em>(<em>n</em> − 1) coups), et après son déplacement il
+          faut les replacer (encore ≥ <em>T</em>(<em>n</em> − 1) coups). Donc <em>T</em>(<em>n</em>) ≥ 2·<em>T</em>(<em>n</em> − 1) + 1.</li>
+          <li><strong>Par fonction-potentiel</strong> (méthode « énergétique » des
+          <a href="https://www.baeldung.com/cs/towers-of-hanoi-complexity" target="_blank" rel="noopener">algorithmiques
+          classiques</a>) : associer au disque <em>i</em> le potentiel 2<sup>i−1</sup> ; chaque coup ne peut modifier
+          le potentiel total que d’une unité, et le potentiel initial et final diffèrent de 2<sup>n</sup> − 1.</li>
+          <li><strong>Par parité / invariant</strong> : argument déjà suggéré par Lucas, modernisé par Hinz (invariant
+          pondéré <em>I</em> = Σ <em>i</em>·<em>p<sub>i</sub></em>).</li>
+        </ul>
+        <p>Ces arguments montrent aussi que la solution optimale est <strong>unique</strong> (pour un piquet de
+        destination fixé). Dans la pratique, le disque <em>i</em> se déplace exactement 2<sup><em>n</em>−<em>i</em></sup> fois :
+        le plus petit disque bouge à chaque deux coups, le deuxième tous les 4 coups, et le plus grand une seule fois.</p>
+
+        <h2>2. La récursion, un cas d’école</h2>
+        <p>Le fameux algorithme en trois lignes — déplacer les <em>n</em> − 1 plus petits disques vers l’appui, déplacer
+        le plus grand, replacer les <em>n</em> − 1 disques — est l’exemple le plus cité pour introduire les
+        <strong>algorithmes récursifs</strong> en première année d’informatique
+        (<a href="https://www.cut-the-knot.org/recurrence/hanoi.shtml" target="_blank" rel="noopener">Cut the Knot</a>,
+        <a href="https://www.baeldung.com/cs/towers-of-hanoi-complexity" target="_blank" rel="noopener">Baeldung</a>,
+        <a href="https://fr.wikipedia.org/wiki/Tours_de_Hano%C3%AF" target="_blank" rel="noopener">Wikipédia FR</a>) :</p>
+        <div class="formula">Hanoï(n, orig, aux, dest) :<br>
+          si n = 0 : rien&nbsp;&nbsp;|&nbsp;&nbsp;sinon&nbsp;&nbsp;Hanoï(n−1, orig, dest, aux),&nbsp; déplacer n,&nbsp; Hanoï(n−1, aux, orig, dest)</div>
+        <p>Il existe aussi une <strong>solution itérative</strong> sans mémoire de pile, presque aussi simple : le plus
+        petit disque se déplace une fois sur deux, toujours dans le même sens (A→C→B→A si <em>n</em> est impair,
+        A→B→C→A si <em>n</em> est pair), et sinon on joue l’unique coup légal possible. Vu du côté des piquets, la
+        solution optimale devient une simple <strong>séquence périodique</strong> (BCA / CBA) — un « renversement »
+        spectaculaire illustré dans l’article
+        <a href="https://emf.unige.ch/index.php/download_file/view/710/275" target="_blank" rel="noopener">HANOÏ (Alpage, Genève)</a>
+        et dans le fichiers
+        <a href="https://bibnum.publimath.fr/ACF/ACF19226.pdf" target="_blank" rel="noopener">BibNum ACF19226</a>.
+        La démonstration pas à pas de cet site compare les deux algorithmes, qui produisent exactement les mêmes coups.</p>
+
+        <h2>3. Binaire, compteur binaire et code de Gray</h2>
+        <p>Les états du jeu à 3 piquets se codent par un mot de <em>n</em> lettres sur l’alphabet {A, B, C} : la
+        <em>i</em>-ème lettre indique le piquet du disque <em>i</em>. La solution optimale correspond alors à une
+        <strong>énumération binaire</strong> remarquable :</p>
+        <ul>
+          <li>le disque déplacé au coup <em>k</em> est donné par la position du bit qui change entre <em>k</em> et
+          <em>k</em> + 1 écrits en binaire (c’est la <a href="https://mathworld.wolfram.com/TowerofHanoi.html" target="_blank" rel="noopener">séquence
+          de portage binaire + 1</a>, OEIS A001511) ;</li>
+          <li>vus sous cet angle, les coups correspondent à un <strong>compteur binaire</strong> qui s’incrémente,
+          solution aussi exprimée par un <strong>code de Gray</strong> : deux configurations successives ne
+          diffèrent que par la position d’un seul disque ;</li>
+          <li>formellement, résoudre le Hanoï à 3 piquets est équivalent à trouver un
+          <strong>chemin hamiltonien sur l’hypercube</strong> de dimension <em>n</em>
+          (Gardner, 1957 ; cf. <a href="https://www3.cs.stonybrook.edu/~skiena/combinatorica/animations/ham.html" target="_blank" rel="noopener">animations
+          Combinatorica</a> et <a href="https://www.jstage.jst.go.jp/article/imt/8/3/8_695/_pdf/-char/en" target="_blank" rel="noopener">Stockmeyer
+          &amp; Stockmeyer</a>).</li>
+        </ul>
+        <p>Le lien est tellement étroit que l’on peut « hacker » l’exercice de programmation : la suite lexicographique
+        des états du code de Gray donne directement les coups
+        (<a href="https://arxiv.org/abs/1609.06777" target="_blank" rel="noopener">arXiv:1609.06777</a>).
+        Le théoricien Benoît Rittaud prolonge la question avec des
+        <a href="https://accromath.uqam.ca/2016/02/les-tours-de-hanoi-et-la-base-trois/" target="_blank" rel="noopener">« tours de Hanoï en base trois »</a>
+        (variante à 3³ − 1 coups qui parcourt tous les états admissibles).</p>
+
+        <h2>4. Graphes de Hanoï, fractale de Sierpiński, 3<sup>n</sup> états</h2>
+        <p>Il y a exactement 3<sup><em>n</em></sup> configurations légales avec 3 piquets et <em>n</em> disques (chaque
+        disque peut être sur l’un des trois piquets, l’ordre d’empilement étant imposé par les tailles). Le
+        <strong>graphe de Hanoï</strong> <em>H</em><sub>3</sub><sup><em>n</em></sup> a pour sommets ces configurations et pour
+        arêtes les coups légaux :</p>
+        <ul>
+          <li>il est isomorphe au <strong>graphe de Sierpiński</strong> <em>S</em>(<em>n</em>, 3) et se dessine comme la
+          <a href="https://en.wikipedia.org/wiki/Hanoi_graph" target="_blank" rel="noopener">limite du triangle de Sierpiński</a>,
+          en plaçant un disque sur chaque coefficient <strong>impair</strong> du triangle de Pascal
+          (<a href="https://mathworld.wolfram.com/HanoiGraph.html" target="_blank" rel="noopener">MathWorld</a>,
+          Poole 1994) ;</li>
+          <li>il est planaire, parfait, et possède un <strong>cycle hamiltonien unique</strong>
+          (<a href="https://projecteuclid.org/journalArticle/Download?urlid=10.11650%2Ftwjm%2F1500574171" target="_blank" rel="noopener">Klavžar
+          et al.</a>) ;</li>
+          <li>un chemin passant par <em>tous</em> les états admissibles — le « Hanoï complet » — exige
+          3<sup><em>n</em></sup> − 1 coups (récurrence <em>d<sub>n+1</sub></em> = 3·<em>d<sub>n</sub></em> + 2),
+          lien direct avec les codes de Gray ternaires
+          (<a href="https://www.mathoutils.fr/grand-oral-mathematiques/tours-de-hanoi/" target="_blank" rel="noopener">Mathoutils</a>,
+          <a href="https://accromath.uqam.ca/wp-content/uploads/2016/02/Hanoi.pdf" target="_blank" rel="noopener">Rittaud</a>).</li>
+        </ul>
+        <p>Toute la théorie modernisée se trouve dans la monographie de référence
+        <a href="https://link.springer.com/book/10.1007/978-3-0348-0237-6" target="_blank" rel="noopener">« The Tower of Hanoi — Myths and Maths »</a>
+        (Hinz, Klavžar, Milutinović, Petr, Springer) : graphes de Hanoï, graphes de Sierpiński, variantes et
+        applications.</p>
+
+        <h2>5. Quarante piquets : la conjecture de Frame–Stewart</h2>
+        <p>Avec <em>p</em> ≥ 4 piquets, le problème change de nature. Introduite dès 1908 par Dudeney (« Reve’s
+        puzzle ») et généralisée en 1939–1941 par Frame et Stewart, la <strong>stratégie de Frame–Stewart</strong> choisit
+        une coupure <em>k</em> :</p>
+        <div class="formula">T<sub>p</sub>(n) = min<sub>1≤k&lt;n</sub> [ 2·T<sub>p</sub>(k) + T<sub>p−1</sub>(n − k) ]</div>
+        <p>On déplace les <em>k</em> plus petits disques avec tous les piquets, les <em>n</em> − <em>k</em> autres avec un
+        piquet de moins (celui qui reçoit la petite tour est bloqué), puis on remet la petite tour par-dessus. Pour
+        <em>p</em> = 3 on retombe sur 2<sup><em>n</em></sup> − 1 ; pour <em>p</em> = 4, l’optimal <em>k</em> vaut
+        <em>n</em> − ⌈√(2<em>n</em>+1)⌉ + 1 et la suite des minima est
+        <a href="https://oeis.org/A007664" target="_blank" rel="noopener">1, 3, 5, 9, 13, 17, 25, 33, 41, 49, 65, 81, 97, 113, 129… (OEIS A007664)</a>.</p>
+        <ul>
+          <li><strong>p = 4 : résolu.</strong> Après des décennies d’efforts (vérifications informatiques de
+          <a href="https://carleton.ca/scs/wp-content/uploads/sites/260/TR-04-10.pdf" target="_blank" rel="noopener">Hinz &amp; Bode puis
+          Carleton</a>, preuves de rang <em>k</em> ≤ 20…), Thierry Bousch a démontré en 2014 l’optimalité de
+          Frame–Stewart pour 4 piquets (« La quatrième tour de Hanoï », <em>Bull. Belg. Math. Soc.</em> 21) ; une autre
+          preuve a été donnée par Janez Žerovnik
+          (<a href="https://ar5iv.labs.arxiv.org/html/1601.04298" target="_blank" rel="noopener">arXiv:1601.04298</a>) via les
+          automorphismes des graphes de Hanoï à 4 piquets.</li>
+          <li><strong>p ≥ 5 : ouvert depuis plus de 80 ans.</strong> Chen &amp; Shen (2004,
+          <a href="https://dl.acm.org/doi/10.1137/S0097539703431019" target="_blank" rel="noopener">SIAM J. Comput.</a>) ont montré que
+          Frame–Stewart a le bon ordre de grandeur 2<sup>Θ(n<sup>1/(p−2)</sup>)</sup>, et l’amélioration des bornes
+          inférieures se poursuit (<a href="https://www.combinatorics.org/ojs/index.php/eljc/article/download/v23i1p22/pdf/" target="_blank" rel="noopener">Electronic
+          Journal of Combinatorics</a>). En 2025, deux preuves partielles ont été publiées : formule fermée et
+          optimalité prouvée pour les deux premiers régimes
+          (<a href="https://arxiv.org/html/2505.12941v5" target="_blank" rel="noopener">arXiv:2505.12941</a>), et un état de
+          l’art détaillé avec tables de valeurs
+          (<a href="https://arxiv.org/html/2511.07501" target="_blank" rel="noopener">arXiv:2511.07501</a>).</li>
+        </ul>
+        <div class="note"><strong>Point d’attention pédagogique :</strong> imposer la coupure « naïve »
+        <em>k</em> = ⌊<em>n</em>/2⌋ n’est optimal que jusqu’à 8 disques ; à 19 disques et 4 piquets, elle coûte plus de
+        4 fois le minimum (voir le tableau de l’<a href="https://arxiv.org/html/2511.07501" target="_blank" rel="noopener">arXiv:2511.07501</a>).
+        L’onglet <em>Démonstration</em> calcule le vrai argmin à chaque sous-problème.</div>
+
+        <h2>6. La légende des 64 disques — et d’autres usages</h2>
+        <p>Dans la version mythique racontée par Lucas, 64 disques d’or doivent être transférés par des brahmanes :
+        il faudra 2<sup>64</sup> − 1 = 18 446 744 073 709 551 615 coups. À raison d’un coup par seconde, cela représente
+        environ <strong>584,5 milliards d’années</strong>, soit plus de 40 fois l’âge de l’univers. C’est aussi un
+        <a href="https://en.wikipedia.org/wiki/Tower_of_Hanoi" target="_blank" rel="noopener">test de raisonnement célèbre</a>
+        — jusqu’à servir d’épreuve d’intelligence des singes dans <em>La Planète des singes</em> (2011), sous le nom de
+        « Lucas Tower ».</p>
+        <p>Au-delà du jeu, les tours de Hanoï sont aujourd’hui un objet de recherche actif : théorie des graphes
+        (graphes de Sierpiński, codes parfaits, planarité), didactique des récurrences, voire tests de modèles de
+        langage (<a href="https://arxiv.org/html/2511.07501" target="_blank" rel="noopener">arXiv:2511.07501</a> évoque les
+        évaluations d’IA sur Hanoï) et neuropsychologie (le test voisin de la « Tour de Londres »). Les variantes
+        étudiées incluent les tours en base trois, les <em>k</em> disques déplacés à la fois, les piquets supplémentaires
+        et les graphes itérés
+        (<a href="https://www.jstage.jst.go.jp/article/imt/8/3/8_695/_pdf/-char/en" target="_blank" rel="noopener">Stockmeyer
+        &amp; Stockmeyer, 2012</a>).</p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ONGLET SOURCES
+         ============================================================ -->
+    <section id="tab-sources" class="tab-panel article" role="tabpanel">
+      <div class="panel">
+        <h2>Sources et liens externes</h2>
+        <p>Documentation utilisée pour concevoir ce site (recherches web d’octobre 2026).</p>
+
+        <h3>Présentations générales</h3>
+        <ul class="source-list">
+          <li><span class="title">Tours de Hanoï</span> — Wikipédia en français
+            <span class="meta">Règles, récurrence 2<sup>n</sup>−1, algorithme itératif, variante « tous les états ».</span>
+            <a href="https://fr.wikipedia.org/wiki/Tours_de_Hano%C3%AF" target="_blank" rel="noopener">fr.wikipedia.org/wiki/Tours_de_Hanoï</a></li>
+          <li><span class="title">Tower of Hanoi</span> — Wikipédia en anglais
+            <span class="meta">Historique (Lucas, 1883), légende, Frame–Stewart, encyclopédie des variantes.</span>
+            <a href="https://en.wikipedia.org/wiki/Tower_of_Hanoi" target="_blank" rel="noopener">en.wikipedia.org/wiki/Tower_of_Hanoi</a></li>
+          <li><span class="title">Tower of Hanoi — Wolfram MathWorld</span> — Eric W. Weisstein
+            <span class="meta">Formules, séquence du disque déplacé (A001511), isomorphisme hypercube.</span>
+            <a href="https://mathworld.wolfram.com/TowerofHanoi.html" target="_blank" rel="noopener">mathworld.wolfram.com/TowerofHanoi.html</a></li>
+          <li><span class="title">Tower of Hanoi</span> — Alexander Bogomolny, Cut the Knot
+            <span class="meta">Démonstration récursive et résolution de la récurrence, applet interactive.</span>
+            <a href="https://www.cut-the-knot.org/recurrence/hanoi.shtml" target="_blank" rel="noopener">cut-the-knot.org/recurrence/hanoi.shtml</a></li>
+        </ul>
+
+        <h3>Articles et fiches pédagogiques (français)</h3>
+        <ul class="source-list">
+          <li><span class="title">Les tours de Hanoï (I)</span> — Jonathan Chappelon, Images des Mathématiques (CNRS)
+            <span class="meta">Problème classique, minimalité, version simplifiée de la solution optimale (2016).</span>
+            <a href="https://images.math.cnrs.fr/les-tours-de-hanoi-i/" target="_blank" rel="noopener">images.math.cnrs.fr/les-tours-de-hanoi-i</a></li>
+          <li><span class="title">Les tours de Hanoï et la base trois</span> — Benoît Rittaud, Accro’Math (UQAM)
+            <span class="meta">Lien avec la numération binaire, variante en base trois (3<sup>n</sup>−1 coups).</span>
+            <a href="https://accromath.uqam.ca/2016/02/les-tours-de-hanoi-et-la-base-trois/" target="_blank" rel="noopener">accromath.uqam.ca — base trois</a> ·
+            <a href="https://accromath.uqam.ca/wp-content/uploads/2016/02/Hanoi.pdf" target="_blank" rel="noopener">PDF complet</a></li>
+          <li><span class="title">Grand Oral : Les tours de Hanoï</span> — Mathoutils
+            <span class="meta">Récurrence, preuve par récurrence, algorithme itératif, graphe des configurations (2022).</span>
+            <a href="https://www.mathoutils.fr/grand-oral-mathematiques/tours-de-hanoi/" target="_blank" rel="noopener">mathoutils.fr/grand-oral-mathematiques/tours-de-hanoi</a></li>
+          <li><span class="title">HANOÏ</span> — Alpage / Université de Genève (BibNum ACF19226)
+            <span class="meta">Observations didactiques, solution périodique par les piquets, variante C / BC.</span>
+            <a href="https://emf.unige.ch/index.php/download_file/view/710/275" target="_blank" rel="noopener">emf.unige.ch</a> ·
+            <a href="https://bibnum.publimath.fr/ACF/ACF19226.pdf" target="_blank" rel="noopener">bibnum.publimath.fr</a></li>
+        </ul>
+
+        <h3>Algorithmique et complexité</h3>
+        <ul class="source-list">
+          <li><span class="title">21.1: The Towers of Hanoi</span> — Lehman, Leighton &amp; Meyer, <em>Mathematics for Computer
+            Science</em> (LibreTexts)
+            <span class="meta">Résolution de la récurrence, preuves par induction.</span>
+            <a href="https://eng.libretexts.org/Bookshelves/Computer_Science/Programming_and_Computation_Fundamentals/Mathematics_for_Computer_Science_(Lehman_Leighton_and_Meyer)/05%3A_Recurrences/21%3A_Recurrences/21.01%3A_The_Towers_of_Hanoi" target="_blank" rel="noopener">eng.libre_texts.org — 21.01</a></li>
+          <li><span class="title">Recurrences I</span> — Boaz Barak, notes du cours 6.042 (MIT)
+            <span class="meta">Borne supérieure, preuve d’optimalité, comparaison avec le tri fusion.</span>
+            <a href="https://cs121.boazbarak.org/LL_recurrence_1.pdf" target="_blank" rel="noopener">cs121.boazbarak.org/LL_recurrence_1.pdf</a></li>
+          <li><span class="title">The Complexity of Towers of Hanoi</span> — Baeldung
+            <span class="meta">Analyse de complexité en O(2<sup>n</sup>), pseudo-code récursif et itératif.</span>
+            <a href="https://www.baeldung.com/cs/towers-of-hanoi-complexity" target="_blank" rel="noopener">baeldung.com/cs/towers-of-hanoi-complexity</a></li>
+          <li><span class="title">Simple Variations on The Tower of Hanoi</span> — Saad Mneimneh (Hunter College, CUNY)
+            <span class="meta">Variantes Double-Decker / k-Decker, récurrences et preuves par induction.</span>
+            <a href="https://www.cs.hunter.cuny.edu/~saad/teaching/TMCS-459.pdf" target="_blank" rel="noopener">cs.hunter.cuny.edu — TMCS-459.pdf</a></li>
+        </ul>
+
+        <h3>Graphes, fractales et codes de Gray</h3>
+        <ul class="source-list">
+          <li><span class="title">Hanoi graph</span> — Wikipédia en anglais
+            <span class="meta">Construction du graphe, 3<sup>n</sup> sommets, cycle hamiltonien, lien avec Pascal.</span>
+            <a href="https://en.wikipedia.org/wiki/Hanoi_graph" target="_blank" rel="noopener">en.wikipedia.org/wiki/Hanoi_graph</a></li>
+          <li><span class="title">Hanoi Graph — Wolfram MathWorld</span>
+            <span class="meta">Codage par les coefficients impairs du triangle de Pascal (Poole 1994).</span>
+            <a href="https://mathworld.wolfram.com/HanoiGraph.html" target="_blank" rel="noopener">mathworld.wolfram.com/HanoiGraph.html</a></li>
+          <li><span class="title">Sierpiński graphs and the Tower of Hanoi</span> — Klavžar, Milutinović &amp; Petr
+            <span class="meta">Isomorphisme S(n,3) ↔ graphe de Hanoï, colorations uniques, cycle hamiltonien unique.</span>
+            <a href="https://projecteuclid.org/journalArticle/Download?urlid=10.11650%2Ftwjm%2F1500574171" target="_blank" rel="noopener">projecteuclid.org — Twmj</a></li>
+          <li><span class="title">Can the Sierpinski Graph be Embedded in the Hamming Graph?</span> — arXiv:1609.06777
+            <span class="meta">Embedding S(n,m), lien avec le code de Gray et une formule algébrique de solution.</span>
+            <a href="https://arxiv.org/abs/1609.06777" target="_blank" rel="noopener">arxiv.org/abs/1609.06777</a></li>
+          <li><span class="title">Hamiltonian Cycle / Gray Code Animation</span> — Steven S. Skiena, Combinatorica (Stony Brook)
+            <span class="meta">Cycles hamiltoniens sur les hypercubes et codes de Gray.</span>
+            <a href="https://www3.cs.stonybrook.edu/~skiena/combinatorica/animations/ham.html" target="_blank" rel="noopener">www3.cs.stonybrook.edu — animations</a></li>
+          <li><span class="title">Towers of Hanoi and Spin-Out</span> — Paul &amp; Julia Stockmeyer (2012)
+            <span class="meta">Graphes itérés K<sup>n</sup><sub>d</sub>, codage binaire, familles de puzzles liés.</span>
+            <a href="https://www.jstage.jst.go.jp/article/imt/8/3/8_695/_pdf/-char/en" target="_blank" rel="noopener">jstage.jst.go.jp — IMT 8(3)</a></li>
+        </ul>
+
+        <h3>Multi-piquets : Frame–Stewart et recherche récente</h3>
+        <ul class="source-list">
+          <li><span class="title">On the Frame–Stewart Conjecture about the Towers of Hanoi</span> — Xiao Chen &amp; Jian Shen,
+            SIAM J. Comput. 33(3), 2004
+            <span class="meta">Ordre de grandeur 2<sup>(1±o(1))(n(k−2)!)<sup>1/(k−2)</sup></sup> ; borne inférieure de référence.</span>
+            <a href="https://dl.acm.org/doi/10.1137/S0097539703431019" target="_blank" rel="noopener">dl.acm.org/doi/10.1137/S0097539703431019</a></li>
+          <li><span class="title">Note sur la conjecture de Frame–Stewart (p &gt; 5)</span> — Electronic Journal of
+            Combinatorics, 23(1) (2016)
+            <span class="meta">Amélioration asymptotique de la borne de Chen–Shen en utilisant les idées de Bousch.</span>
+            <a href="https://www.combinatorics.org/ojs/index.php/eljc/article/download/v23i1p22/pdf/" target="_blank" rel="noopener">combinatorics.org — P1.22</a></li>
+          <li><span class="title">Self Similarities of the Tower of Hanoi Graphs and a proof of the Frame–Stewart
+            Conjecture (p = 4)</span> — Janez Žerovnik, arXiv:1601.04298
+            <span class="meta">Preuve de l’optimalité pour 4 piquets par auto-similarité des graphes labellisés.</span>
+            <a href="https://ar5iv.labs.arxiv.org/html/1601.04298" target="_blank" rel="noopener">ar5iv.labs.arxiv.org/html/1601.04298</a></li>
+          <li><span class="title">La quatrième tour de Hanoï</span> — Thierry Bousch, <em>Bull. Belg. Math. Soc. Simon
+            Stevin</em> 21 (2014), p. 895–912
+            <span class="meta">Première preuve publiée de la conjecture de Frame–Stewart pour 4 piquets (Reve’s puzzle).</span></li>
+          <li><span class="title">Explorations in 4-peg Tower of Hanoi</span> — rapport technique CUNY/Carleton TR-04-10
+            <span class="meta">Vérification par BFS de l’optimalité jusqu’à 20 disques, graphes d’états 2D/3D.</span>
+            <a href="https://carleton.ca/scs/wp-content/uploads/sites/260/TR-04-10.pdf" target="_blank" rel="noopener">carleton.ca — TR-04-10.pdf</a></li>
+          <li><span class="title">On the Optimal General Solution to the Multi-Peg Tower of Hanoi</span> — arXiv:2505.12941 (2025)
+            <span class="meta">Forme fermée de Frame–Stewart ; optimalité prouvée pour les régimes 1 et 2 (n ≤ C(p+1,3)).</span>
+            <a href="https://arxiv.org/html/2505.12941v5" target="_blank" rel="noopener">arxiv.org/html/2505.12941v5</a></li>
+          <li><span class="title">The Tower of Hanoi: Optimality Proofs, Multi-Peg Bounds, and Computational
+            Frontiers</span> — arXiv:2511.07501 (2025)
+            <span class="meta">État de l’art : preuve de Bousch (2014), tables T<sub>4</sub>(n), défaillance du split équilibré.</span>
+            <a href="https://arxiv.org/html/2511.07501" target="_blank" rel="noopener">arxiv.org/html/2511.07501</a></li>
+        </ul>
+
+        <h3>Ouvrages et suites d’entiers</h3>
+        <ul class="source-list">
+          <li><span class="title">The Tower of Hanoi — Myths and Maths</span> — Andreas M. Hinz, Sandi Klavžar,
+            Uroš Milutinović, Ciril Petr (Springer, 2<sup>e</sup> éd.)
+            <span class="meta">Monographie de référence : histoire, graphes de Hanoï et de Sierpiński, multi-piquets, applications.</span>
+            <a href="https://link.springer.com/book/10.1007/978-3-0348-0237-6" target="_blank" rel="noopener">link.springer.com/book/10.1007/978-3-0348-0237-6</a></li>
+          <li><span class="title">OEIS A000225</span> — 2<sup>n</sup> − 1 (nombres de Mersenne, coups pour 3 piquets)
+            <a href="https://oeis.org/A000225" target="_blank" rel="noopener">oeis.org/A000225</a></li>
+          <li><span class="title">OEIS A007664</span> — minimal pour 4 piquets : 1, 3, 5, 9, 13, 17, 25, 33, 41, 49, 65…
+            <a href="https://oeis.org/A007664" target="_blank" rel="noopener">oeis.org/A007664</a></li>
+          <li><span class="title">OEIS A007665</span> — minimal pour 5 piquets : 1, 3, 5, 7, 11, 15, 19, 23, 27, 31, 39, 47…
+            <a href="https://oeis.org/A007665" target="_blank" rel="noopener">oeis.org/A007665</a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Site statique sans dépendance — HTML, CSS et JavaScript natifs. Les séquences de coups affichées sont générées
+    localement par les algorithmes de cette page (récursif, itératif, Frame–Stewart).</p>
+  </footer>
+
+  <script src="js/core.js"></script>
+  <script src="js/algorithms.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/demo.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
