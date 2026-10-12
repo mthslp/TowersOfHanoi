@@ -240,20 +240,70 @@ button.btn.icon {
   min-width: 420px;
 }
 
-.peg-base { fill: #6b7386; }
-.peg-rod { fill: #97a0b5; }
+/* ---------- Plateau : sol, piquets, disques ---------- */
+
+.board-floor {
+  filter: drop-shadow(0 3px 5px rgba(20, 30, 60, 0.22));
+}
+
+.board .metal-edge { stop-color: #737c91; }
+.board .metal-mid { stop-color: #9aa4ba; }
+.board .metal-hi { stop-color: #d9dfec; }
+.board .cap-edge { stop-color: #5e677c; }
+.board .cap-hi { stop-color: #f0f3fa; }
+.board .floor-top { stop-color: #e0e6f3; }
+.board .floor-bot { stop-color: #aeb8cd; }
+.board .halo-in { stop-color: var(--accent); stop-opacity: 0.8; }
+.board .halo-out { stop-color: var(--accent); stop-opacity: 0; }
+
+.peg-rod,
+.peg-cap {
+  transition: fill 160ms ease;
+}
+
+.peg-halo {
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+.peg-target .peg-halo {
+  animation: halo-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes halo-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.25; }
+}
+
 .peg-label {
   fill: var(--text-soft);
   font: 700 15px var(--font);
   text-anchor: middle;
 }
 
+.peg-target .peg-rod,
+.peg-target .peg-cap { fill: var(--accent); }
+.peg-source .peg-rod,
+.peg-source .peg-cap { fill: var(--warn); }
+
+.peg-hit { fill: transparent; cursor: pointer; }
+
 .disk {
-  transition: transform 240ms ease;
   cursor: pointer;
+  transition: transform 240ms ease, filter 160ms ease;
+  filter: drop-shadow(0 2px 3px rgba(15, 22, 44, 0.30));
 }
 
-.disk .body { stroke: rgba(0, 0, 0, 0.28); stroke-width: 1; }
+.disk .inner {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 150ms ease;
+}
+
+.disk .body { stroke: rgba(0, 0, 0, 0.30); stroke-width: 1; }
+
+.disk .gloss { pointer-events: none; }
 
 .disk .label {
   fill: #fff;
@@ -262,25 +312,60 @@ button.btn.icon {
   dominant-baseline: middle;
   pointer-events: none;
   paint-order: stroke;
-  stroke: rgba(0, 0, 0, 0.35);
+  stroke: rgba(0, 0, 0, 0.40);
   stroke-width: 2.5px;
+  visibility: hidden;
 }
+
+.disk:hover .label,
+.disk.selected .label { visibility: visible; }
+
+.disk:hover {
+  filter: drop-shadow(0 5px 7px rgba(15, 22, 44, 0.35));
+}
+
+.disk:hover .inner { transform: translateY(-2px); }
 
 .disk.selected .body {
   stroke: var(--highlight);
   stroke-width: 3;
 }
 
+.disk.selected .inner { transform: translateY(-3px); }
+
 .disk.moved .body {
   stroke: var(--ok);
   stroke-width: 3;
 }
 
-.peg-target .peg-rod { fill: var(--accent); }
-.peg-target .peg-base { fill: var(--accent-strong); }
-.peg-source .peg-rod { fill: var(--warn); }
+.disk.lifting {
+  filter: drop-shadow(0 8px 9px rgba(15, 22, 44, 0.40));
+}
 
-.peg-hit { fill: transparent; cursor: pointer; }
+.disk.lifting .inner { transform: scale(1.06); }
+
+@media (prefers-color-scheme: dark) {
+  .board .metal-edge { stop-color: #434b5f; }
+  .board .metal-mid { stop-color: #596177; }
+  .board .metal-hi { stop-color: #7e8798; }
+  .board .cap-edge { stop-color: #39404f; }
+  .board .cap-hi { stop-color: #9aa4b8; }
+  .board .floor-top { stop-color: #2d3547; }
+  .board .floor-bot { stop-color: #171c27; }
+  .board-floor { filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.55)); }
+  .disk { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55)); }
+  .disk:hover { filter: drop-shadow(0 5px 7px rgba(0, 0, 0, 0.6)); }
+  .disk.lifting { filter: drop-shadow(0 8px 9px rgba(0, 0, 0, 0.65)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disk,
+  .disk .inner,
+  .peg-rod,
+  .peg-cap,
+  .peg-halo { transition: none; }
+  .peg-target .peg-halo { animation: none; opacity: 0.5; }
+}
 
 /* ---------- Démonstration pas à pas ---------- */
 

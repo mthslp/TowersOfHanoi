@@ -58,6 +58,13 @@
       return Math.round(650 - v * 6); // 650 ms → 50 ms
     }
 
+    // La durée de l'animation de déplacement suit la vitesse de lecture.
+    function applySpeed() {
+      const interval = intervalFromSlider();
+      board.setAnimDuration(Math.round(Math.min(320, Math.max(90, interval * 0.55))));
+      return interval;
+    }
+
     function stopPlayback(silent) {
       if (player) {
         player.pause();
@@ -200,7 +207,7 @@
           checkWin();
         }
       );
-      player.setInterval(intervalFromSlider());
+      player.setInterval(applySpeed());
       player.play();
       render(null);
     }
@@ -248,6 +255,11 @@
     });
     el.solve.addEventListener('click', solve);
     el.stop.addEventListener('click', stop);
+    el.speed.addEventListener('input', () => {
+      const interval = applySpeed();
+      if (player) player.setInterval(interval);
+    });
+    applySpeed();
 
     setup();
     return { setup };

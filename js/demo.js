@@ -64,6 +64,13 @@
       return Math.round(700 - v * 6.5); // 700 ms → 50 ms
     }
 
+    // La durée de l'animation de déplacement suit la vitesse de lecture.
+    function applySpeed() {
+      const interval = intervalFromSlider();
+      board.setAnimDuration(Math.round(Math.min(320, Math.max(90, interval * 0.55))));
+      return interval;
+    }
+
     function lineKey(line) {
       return String(line);
     }
@@ -268,7 +275,7 @@
           return;
         }
         next();
-        timer = setTimeout(tick, intervalFromSlider());
+        timer = setTimeout(tick, applySpeed());
       };
       tick();
     }
@@ -310,6 +317,8 @@
     el.prev.addEventListener('click', prev);
     el.restart.addEventListener('click', restart);
     el.play.addEventListener('click', togglePlay);
+    el.speed.addEventListener('input', applySpeed);
+    applySpeed();
 
     document.addEventListener('keydown', (ev) => {
       const panel = document.getElementById('tab-demo');
